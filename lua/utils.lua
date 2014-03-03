@@ -48,6 +48,26 @@ function class(base, init)
 end
 
 
+-- Same as require but does not enforce it to exist.
+-- Different from pcall(require, ...) because we still want errors for other reasons.
+function include(mod)
+  local searchers = package.loaders or package.searchers
+  local i = #searchers
+  searchers[i] = function(mod)
+    return function()
+      return { _includenotloaded = 42 }
+    end
+  end
+  local ok, m = pcall(require, mod)
+  searchers[i] = nil
+  assert(ok, m)
+  if m._includenotloaded == 42 then
+    return false, "include cannot find module " .. mod
+  end
+  return m
+end
+
+
 event = class()
 
 function event:init()
