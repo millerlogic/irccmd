@@ -34,6 +34,9 @@ gcc -o irccmd *.c -llua -lm -ldl -Wl,-E
 #define _ON_WINDOWS_ 1
 #endif
 
+#if defined(__APPLE__)
+#define MSG_NOSIGNAL SO_NOSIGPIPE
+#endif
 
 lua_State *L = NULL;
 FRandom frand;
@@ -211,7 +214,7 @@ static int _socketsCleanup()
 #endif
 
 
-LL_INLINE unsigned long rrandom()
+static LL_INLINE unsigned long rrandom()
 {
 	return ((unsigned long)rand()        & 0x00000FFF)
 		| (((unsigned long)rand() << 12) & 0x00FFF000)
@@ -296,7 +299,7 @@ int luafunc_frandom(lua_State *L)
 #define milliseconds GetTickCount
 #else
 #include <sys/time.h>
-LL_INLINE unsigned long milliseconds()
+static LL_INLINE unsigned long milliseconds()
 {
 	struct timeval tv;
 	if(-1 == gettimeofday(&tv, NULL))
