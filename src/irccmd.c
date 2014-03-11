@@ -34,10 +34,6 @@ gcc -o irccmd *.c -llua -lm -ldl -Wl,-E
 #define _ON_WINDOWS_ 1
 #endif
 
-#if defined(__APPLE__)
-#define MSG_NOSIGNAL SO_NOSIGPIPE
-#endif
-
 lua_State *L = NULL;
 FRandom frand;
 
@@ -439,6 +435,7 @@ int luafunc_socket_connect(lua_State *L)
 	const char *saddress, *sport;
 	int socketCreatedFuncIndex = 0;
 	char portbuf[16];
+	int reuse = 1;
 
 	addrhintsdefaults(&addrhints);
 
@@ -525,6 +522,10 @@ int luafunc_socket_connect(lua_State *L)
 						lua_pop(L, 1);
 					}
 				}
+
+#if defined(__APPLE__)
+				setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, (void *)&reuse, sizeof(int));
+#endif
 
 				if(_SOCKET_ERROR == connect(sock, itaddr->ai_addr, itaddr->ai_addrlen))
 				{
@@ -1078,7 +1079,7 @@ badarg:
 			goto badarg;
 	}
 #ifdef _ON_WINDOWS_
-#else
+#elif !defined(__APPLE__)
 	flags |= MSG_NOSIGNAL;
 #endif
 	if(dataLength > SOCKET_DEFAULT_BUFFER_SIZE)
@@ -1136,7 +1137,7 @@ badarg:
 			goto badarg;
 	}
 #ifdef _ON_WINDOWS_
-#else
+#elif !defined(__APPLE__)
 	flags |= MSG_NOSIGNAL;
 #endif
 	if(lua_isnumber(L, 3))
