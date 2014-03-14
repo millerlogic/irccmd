@@ -4,7 +4,7 @@
 */
 
 /*
-gcc -o irccmd *.c -llua -lm -ldl -Wl,-E
+gcc -o irccmd *.c -I/usr/include/lua5.1 -llua5.1 -lm -ldl -Wl,-E
 	-D_DEBUG=1
 */
 
@@ -453,7 +453,7 @@ int luafunc_socket_connect(lua_State *L)
 
 	if(lua_isnumber(L, 2))
 	{
-		sprintf(portbuf, "%d", lua_tointeger(L, 2));
+		sprintf(portbuf, "%d", (int)lua_tointeger(L, 2));
 		sport = portbuf;
 	}
 	else if(lua_isstring(L, 2))
@@ -601,7 +601,7 @@ int luafunc_socket_bind(lua_State *L)
 
 	if(lua_isnumber(L, 3))
 	{
-		sprintf(portbuf, "%d", lua_tointeger(L, 3));
+		sprintf(portbuf, "%d", (int)lua_tointeger(L, 3));
 		sport = portbuf;
 	}
 	else if(lua_isstring(L, 3))
@@ -692,7 +692,7 @@ int luafunc_socket_listen(lua_State *L)
 
 	if(lua_isnumber(L, iarg))
 	{
-		sprintf(portbuf, "%d", lua_tointeger(L, iarg++));
+		sprintf(portbuf, "%d", (int)lua_tointeger(L, iarg++));
 		sport = portbuf;
 	}
 	else if(lua_isstring(L, iarg))
