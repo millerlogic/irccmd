@@ -178,6 +178,8 @@ function do_cmdline(argc, argv)
 			elseif arg == "-load" then
 				if not loadscripts then loadscripts = {} end
 				table.insert(loadscripts, argvalue)
+			elseif arg == "-flag" then
+				_G[argvalue] = true
 			elseif arg == "-input_clear" then
 				comm_input = {}
 			elseif arg == "-output_clear" then
@@ -431,7 +433,7 @@ end
 if internal._icDebug then
 	-- print("package.path=", package.path)
 	-- print("package.cpath=", package.cpath)
-	local testargs = { "debugapp", "localhost", "Foo%n%S%s", "-load=armleg.lua", "-raw" }
+	local testargs = { "debugapp", "localhost", "Foo%n%S%s", "-load=gamearmleg.lua", "-raw" }
 	irccmd_startup(#testargs, testargs) -- Run a test when debugging.
 end
 
