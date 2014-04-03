@@ -2017,7 +2017,8 @@ int main(int argc, char* argv[])
 
 	fprintf(stderr, "Loading script...\n");
 	fflush(stderr);
-	if(luaL_dofile(L, "irccmd.lua"))
+	//if(luaL_dofile(L, "irccmd.lua"))
+	if(luaL_dostring(L, "require('irccmd')"))
 	{
 		const char *err = lua_tostring(L, -1);
 		fprintf(stderr, "Error loading script: %s\n", err);
