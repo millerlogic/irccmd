@@ -58,12 +58,15 @@ function include(mod)
       return { _includenotloaded = 42 }
     end
   end
-  local ok, m = pcall(require, mod)
+  local ok, m, merr = pcall(require, mod)
   searchers[i] = nil
   assert(ok, m)
-  if m._includenotloaded == 42 then
-    return false, "include cannot find module " .. mod
-  end
+	assert(m, merr)
+	if type(m) == "table" then
+		if m._includenotloaded == 42 then
+			return false, "include cannot find module " .. mod
+		end
+	end
   return m
 end
 
