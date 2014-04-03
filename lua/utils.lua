@@ -60,7 +60,11 @@ function include(mod)
   end
   local ok, m, merr = pcall(require, mod)
   searchers[i] = nil
-  assert(ok, m)
+  -- assert(ok, m)
+	if not ok then
+		-- Not sure why this happens but it does.
+		return false, m
+	end
 	assert(m, merr)
 	if type(m) == "table" then
 		if m._includenotloaded == 42 then
