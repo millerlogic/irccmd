@@ -49,29 +49,15 @@ end
 
 
 -- Same as require but does not enforce it to exist.
--- Different from pcall(require, ...) because we still want errors for other reasons.
 function include(mod)
-  local searchers = package.loaders or package.searchers
-  local i = #searchers
-  searchers[i] = function(mod)
-    return function()
-      return { _includenotloaded = 42 }
-    end
-  end
-  local ok, m, merr = pcall(require, mod)
-  searchers[i] = nil
-  -- assert(ok, m)
-	if not ok then
-		-- Not sure why this happens but it does.
-		return false, m
+  local a, b, c = pcall(require, mod)
+  if not a then
+		return a, b
 	end
-	assert(m, merr)
-	if type(m) == "table" then
-		if m._includenotloaded == 42 then
-			return false, "include cannot find module " .. mod
-		end
+	if not b then
+		return b, c
 	end
-  return m
+	return b
 end
 
 
