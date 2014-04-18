@@ -1977,9 +1977,6 @@ static void lua_pushstringsarray(lua_State *L, int argc, char* argv[])
 }
 
 
-extern struct luaL_Reg bit_funcs[];
-
-
 /*
 	Usage: irccmd <address>[:<port>] [<nick> [<alt_nick>]]
 	nick and alt_nick can contain replacements:
@@ -2009,11 +2006,6 @@ int main(int argc, char* argv[])
 		_programError("luaL_newstate() returned NULL", 1);
 	luaL_openlibs(L);
 	addluafunctions();
-#if LUA_VERSION_NUM < 502
-  luaL_register(L, "bit", bit_funcs);
-#else
-  luaL_newlib(L, bit_funcs);
-#endif
 
 	fprintf(stderr, "Loading script...\n");
 	fflush(stderr);
