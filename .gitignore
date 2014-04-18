@@ -1,0 +1,11 @@
+irccmd
+
+*.o
+*.obj
+*.lib
+*.a
+*.dll
+*.so
+*.so.*
+*.dylib
+*.exe
