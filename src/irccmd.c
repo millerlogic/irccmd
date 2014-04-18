@@ -60,7 +60,7 @@ FRandom frand;
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
-void MAXOF_Test()
+static void MAXOF_Test()
 {
 	/*
 	fprintf(stderr, "MAXOF(char) = %d\n", MAXOF(char));
@@ -85,7 +85,7 @@ void MAXOF_Test()
 #endif
 
 
-void _programError(const char *reason, int fatal)
+static void _programError(const char *reason, int fatal)
 {
 	fprintf(stderr, "%sProgram Error: %s\n",
 		fatal ? "Fatal " : "",
@@ -143,7 +143,7 @@ typedef SOCKET socket_t;
 socket_t _stdinsock = _INVALID_SOCKET;
 struct sockaddr_in _stdinsockaddr;
 long _last_stdinsockaddr_addr = 0;
-void _fix_stdinsockaddr()
+static void _fix_stdinsockaddr()
 {
 	char buf[64];
 	union
@@ -220,7 +220,7 @@ static LL_INLINE unsigned long rrandom()
 
 
 /**	x = random([limit]) */
-int luafunc_random(lua_State *L)
+static int luafunc_random(lua_State *L)
 {
 	unsigned long rn = rrandom();
 	if(lua_isnumber(L, 1))
@@ -246,7 +246,7 @@ int luafunc_random(lua_State *L)
 	x = frandom(upper)
 	x = frandom(lower, upper)
 */
-int luafunc_frandom(lua_State *L)
+static int luafunc_frandom(lua_State *L)
 {
 	unsigned long rn;
 	if(lua_isnumber(L, 1))
@@ -306,14 +306,14 @@ static LL_INLINE unsigned long milliseconds()
 
 
 /**	Handles overflow as long as the times don't span longer than 49 days (32-bits). */
-unsigned long milliseconds_diff(unsigned long ms_old, unsigned long ms_new)
+static unsigned long milliseconds_diff(unsigned long ms_old, unsigned long ms_new)
 {
 	return (ms_new - ms_old);
 }
 
 
 /**	x = milliseconds() */
-int luafunc_milliseconds(lua_State *L)
+static int luafunc_milliseconds(lua_State *L)
 {
 	lua_pushnumber(L, milliseconds());
 	return 1; /* Number of return values. */
@@ -321,7 +321,7 @@ int luafunc_milliseconds(lua_State *L)
 
 
 /**	x = milliseconds_diff(old, new) */
-int luafunc_milliseconds_diff(lua_State *L)
+static int luafunc_milliseconds_diff(lua_State *L)
 {
 	unsigned long ms_old, ms_new;
 	if(!lua_isnumber(L, 1) || !lua_isnumber(L, 2))
@@ -428,7 +428,7 @@ static int tryluaaddressfamily(int luaIndex, struct addrinfo *paddrhints)
 	socketCreatedFunc is called with a socket created, which can occur multiple times!
 	socketCreatedFunc is optional and can be specified after or instead of [type,family].
 */
-int luafunc_socket_connect(lua_State *L)
+static int luafunc_socket_connect(lua_State *L)
 {
 	socket_t sock;
 	struct addrinfo addrhints, *addr;
@@ -572,7 +572,7 @@ int luafunc_socket_connect(lua_State *L)
 	Default for address and port are any address and random port.
 	Future: deprecate [type,family], get it from the socket (getsockname)?
 */
-int luafunc_socket_bind(lua_State *L)
+static int luafunc_socket_bind(lua_State *L)
 {
 	socket_t sock;
 	struct addrinfo addrhints, *addr;
@@ -668,7 +668,7 @@ int luafunc_socket_bind(lua_State *L)
 	address can be nil or omitted to allow any address.
 	backlog can be nil for irccmd's default backlog.
 */
-int luafunc_socket_listen(lua_State *L)
+static int luafunc_socket_listen(lua_State *L)
 {
 	socket_t sock;
 	struct addrinfo addrhints, *addr;
@@ -792,7 +792,7 @@ int luafunc_socket_listen(lua_State *L)
 
 
 /**	(new_socket, address, port) = socket_accept(socket) */
-int luafunc_socket_accept(lua_State *L)
+static int luafunc_socket_accept(lua_State *L)
 {
 	socket_t sock;
 	socket_t newsock;
@@ -862,7 +862,7 @@ int luafunc_socket_accept(lua_State *L)
 
 
 /**	Release this socket, disconnecting if necessary. */
-int luafunc_socket_close(lua_State *L)
+static int luafunc_socket_close(lua_State *L)
 {
 	if(lua_isnumber(L, 1))
 	{
@@ -873,7 +873,7 @@ int luafunc_socket_close(lua_State *L)
 
 
 /**	true = socket_blocking(socket, bool) */
-int luafunc_socket_blocking(lua_State *L)
+static int luafunc_socket_blocking(lua_State *L)
 {
 	socket_t sock;
 	int byes;
@@ -918,7 +918,7 @@ err:
 	Otherwise, seconds must be a number.
 	Time is in whole seconds.
 */
-int luafunc_socket_linger(lua_State *L)
+static int luafunc_socket_linger(lua_State *L)
 {
 	socket_t sock;
 	struct linger lr;
@@ -969,7 +969,7 @@ int luafunc_socket_linger(lua_State *L)
 #if 0
 /**	true = socket_reuseaddr(socket, bool)
 */
-int luafunc_socket_reuseaddr(lua_State *L)
+static int luafunc_socket_reuseaddr(lua_State *L)
 {
 	socket_t sock;
 	int on;
@@ -1001,7 +1001,7 @@ int luafunc_socket_reuseaddr(lua_State *L)
 /**	bool = socket_shutdown(socket, how)
 	how is one of the strings: RECEIVE, SEND, BOTH
 */
-int luafunc_socket_shutdown(lua_State *L)
+static int luafunc_socket_shutdown(lua_State *L)
 {
 	const char *sHow;
 	int sock, how;
@@ -1046,7 +1046,7 @@ badarg:
 	flags can be nil or one of the strings: NONE (default), OOB, DONTROUTE.
 	NOSIGNAL (don't send SIGPIPE signal) is assumed.
 */
-int luafunc_socket_send(lua_State *L)
+static int luafunc_socket_send(lua_State *L)
 {
 	int sock;
 	const char *data;
@@ -1106,7 +1106,7 @@ badarg:
 	NOSIGNAL (don't send SIGPIPE signal) is assumed.
 	maxBytes can be specified to prevent reading more than this many bytes; must be > 0.
 */
-int luafunc_socket_receive(lua_State *L)
+static int luafunc_socket_receive(lua_State *L)
 {
 	int sock;
 	char buf[SOCKET_DEFAULT_BUFFER_SIZE];
@@ -1169,7 +1169,7 @@ badarg:
 
 
 #ifdef _ON_WINDOWS_
-DWORD WINAPI _stdinthreadproc(LPVOID lpParameter)
+static DWORD WINAPI _stdinthreadproc(LPVOID lpParameter)
 {
 #define STDIN_WCHAR_BUF_SIZE (1024 * 2)
 #define STDIN_CCHAR_BUF_SIZE (1024 * 4)
@@ -1223,7 +1223,7 @@ int _stdinOpen = 1;
 	Key "stdin" with value "r" can be specified to wait for standard input.
 		On "stdin" event, key "stdin" will have value "<line>"
 */
-int luafunc_socket_select(lua_State *L)
+static int luafunc_socket_select(lua_State *L)
 {
 	int result;
 	struct timeval tv;
@@ -1476,7 +1476,7 @@ int luafunc_socket_select(lua_State *L)
 }
 
 
-void lua_print_args(lua_State *L, FILE *f)
+static void lua_print_args(lua_State *L, FILE *f)
 {
 	int iarg;
 	for(iarg = 1; !lua_isnone(L, iarg); iarg++)
@@ -1491,7 +1491,7 @@ void lua_print_args(lua_State *L, FILE *f)
 
 
 /**	*/
-int luafunc_console_print(lua_State *L)
+static int luafunc_console_print(lua_State *L)
 {
 	lua_print_args(L, stdout);
 	return 0; /* Number of return values. */
@@ -1499,7 +1499,7 @@ int luafunc_console_print(lua_State *L)
 
 
 /**	*/
-int luafunc_console_print_err(lua_State *L)
+static int luafunc_console_print_err(lua_State *L)
 {
 	lua_print_args(L, stderr);
 	return 0; /* Number of return values. */
@@ -1507,7 +1507,7 @@ int luafunc_console_print_err(lua_State *L)
 
 
 /**	line = irc_input(line_data) */
-int luafunc_irc_input(lua_State *L)
+static int luafunc_irc_input(lua_State *L)
 {
 	const unsigned char *us;
 	size_t i, len;
@@ -1538,7 +1538,7 @@ int luafunc_irc_input(lua_State *L)
 /**	(prefix, cmd, params) = irc_input(line)
 	params is a table; prefix may be nil if no prefix.
 */
-int luafunc_irc_parse(lua_State *L)
+static int luafunc_irc_parse(lua_State *L)
 {
 	const char *s, *s2;
 	size_t i, x;
@@ -1642,7 +1642,7 @@ static LL_INLINE int tolower_strict_rfc1459(char ch)
 
 
 /**	*/
-int compare_ascii(const char *s1, size_t s1len, const char *s2, size_t s2len)
+static int compare_ascii(const char *s1, size_t s1len, const char *s2, size_t s2len)
 {
 	size_t i;
 	for(i = 0;; i++)
@@ -1664,7 +1664,7 @@ int compare_ascii(const char *s1, size_t s1len, const char *s2, size_t s2len)
 }
 
 /**	*/
-int compare_rfc1459(const char *s1, size_t s1len, const char *s2, size_t s2len)
+static int compare_rfc1459(const char *s1, size_t s1len, const char *s2, size_t s2len)
 {
 	size_t i;
 	for(i = 0;; i++)
@@ -1686,7 +1686,7 @@ int compare_rfc1459(const char *s1, size_t s1len, const char *s2, size_t s2len)
 }
 
 /**	*/
-int compare_strict_rfc1459(const char *s1, size_t s1len, const char *s2, size_t s2len)
+static int compare_strict_rfc1459(const char *s1, size_t s1len, const char *s2, size_t s2len)
 {
 	size_t i;
 	for(i = 0;; i++)
@@ -1709,7 +1709,7 @@ int compare_strict_rfc1459(const char *s1, size_t s1len, const char *s2, size_t 
 
 
 #if _DEBUG
-void compare_Test()
+static void compare_Test()
 {
 	assert('a' == tolower_ascii('a'));
 	assert('a' == tolower_ascii('A'));
@@ -1729,7 +1729,7 @@ void compare_Test()
 
 
 /**	integer = compare_ascii(s1, s2) */
-int luafunc_compare_ascii(lua_State *L)
+static int luafunc_compare_ascii(lua_State *L)
 {
 
 	const char *s1, *s2;
@@ -1744,7 +1744,7 @@ int luafunc_compare_ascii(lua_State *L)
 
 
 /**	integer = compare_rfc1459(s1, s2) */
-int luafunc_compare_rfc1459(lua_State *L)
+static int luafunc_compare_rfc1459(lua_State *L)
 {
 	const char *s1, *s2;
 	size_t s1len, s2len;
@@ -1758,7 +1758,7 @@ int luafunc_compare_rfc1459(lua_State *L)
 
 
 /**	integer = compare_strict_rfc1459(s1, s2) */
-int luafunc_compare_strict_rfc1459(lua_State *L)
+static int luafunc_compare_strict_rfc1459(lua_State *L)
 {
 	const char *s1, *s2;
 	size_t s1len, s2len;
@@ -1808,7 +1808,7 @@ static void *memLimitLuaAlloc(void *ud, void *ptr, size_t oldSize, size_t newSiz
 	To simply use the counter, set the limit very high, such as 0x7FFFFFFF.
 	If thread is specified, the limit is set for the current state AND the thread.
 */
-int luafunc_memory_limit(lua_State *L)
+static int luafunc_memory_limit(lua_State *L)
 {
 	lua_State *lthread = lua_tothread(L, 2);
 	if(lua_isnumber(L, 1))
@@ -1870,7 +1870,7 @@ int luafunc_memory_limit(lua_State *L)
 /**	string = UTF32toUTF8char(utf32number, ...)
 	All the UTF32 codepoint numbers passed in compose the result string.
 */
-int luafunc_UTF32toUTF8char(lua_State *L)
+static int luafunc_UTF32toUTF8char(lua_State *L)
 {
 	char _buf[32];
 	char *buf = _buf;
@@ -1921,7 +1921,7 @@ int luafunc_UTF32toUTF8char(lua_State *L)
 #endif
 
 
-void addluafunctions()
+static void addluafunctions()
 {
 	luaL_Reg array[] = {
 		{ "random", &luafunc_random },
@@ -1957,7 +1957,7 @@ void addluafunctions()
 }
 
 
-void lua_pushstringsarray(lua_State *L, int argc, char* argv[])
+static void lua_pushstringsarray(lua_State *L, int argc, char* argv[])
 {
 	lua_Integer i;
 	lua_Integer n;
