@@ -1,6 +1,20 @@
 -- Copyright 2012-2014 Christopher E. Miller
 -- License: GPLv3, see LICENSE file.
 
+--[=[
+	Usage: irccmd <address>[:<port>] [<nick> [<alt_nick>]]
+	nick and alt_nick can contain replacements:
+		%d for a random digit.
+		%a for a random alpha char, %A for uppercase.
+		%n for a random number between 10 and 999 (between 2 and 3 digits)
+		%s for a random string of between 2 and 3 alpha chars, %S for uppercase.
+	If no alt_nick supplied and nick contains no replacements, <nick>_%n is used.
+	Other switches supported:
+		-raw            write all received commands to stderr.
+		-raw=<file>     where <file> is either stdout, stderr or a filename.
+]=]
+
+require("irccmd_internal") -- provides "internal"
 require("utils")
 require("internal")
 require("timersl")
@@ -470,3 +484,12 @@ if internal._icDebug then
 	irccmd_startup(#testargs, testargs) -- Run a test when debugging.
 end
 
+internal.socket_startup()
+
+local argc, argv = #arg + 1, {}
+for i=-1, #arg do
+	argv[i+1] = arg[i]
+end
+irccmd_startup(argc, argv)
+
+internal.socket_cleanup()

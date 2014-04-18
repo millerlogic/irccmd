@@ -6,6 +6,7 @@ solution "irccmd"
 		language "C"
 		files { "**.h", "**.c" }
 
+		targetname "irccmd_internal"
 		targetprefix ""
 
 		configuration "macosx"

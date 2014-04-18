@@ -1899,19 +1899,7 @@ static int luafunc_socket_cleanup(lua_State *L)
 }
 
 
-/*
-	Usage: irccmd <address>[:<port>] [<nick> [<alt_nick>]]
-	nick and alt_nick can contain replacements:
-		%d for a random digit.
-		%a for a random alpha char, %A for uppercase.
-		%n for a random number between 10 and 999 (between 2 and 3 digits)
-		%s for a random string of between 2 and 3 alpha chars, %S for uppercase.
-	If no alt_nick supplied and nick contains no replacements, <nick>_%n is used.
-	Other switches supported:
-		-raw            write all received commands to stderr.
-		-raw=<file>     where <file> is either stdout, stderr or a filename.
-*/
-int luaopen_irccmd(lua_State *L)
+int luaopen_irccmd_internal(lua_State *L)
 {
 #if _DEBUG
 	compare_Test();
