@@ -3,11 +3,6 @@
   License: GPLv3, see LICENSE file.
 */
 
-/*
-gcc -o irccmd *.c -I/usr/include/lua5.1 -llua5.1 -lm -ldl -Wl,-E
-	-D_DEBUG=1
-*/
-
 #define _WINSOCKAPI_
 
 #ifdef _MSC_VER
@@ -19,6 +14,10 @@ gcc -o irccmd *.c -I/usr/include/lua5.1 -llua5.1 -lm -ldl -Wl,-E
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+#if _DEBUG
+#include <assert.h>
+#endif
 
 #include "frandom.h"
 #include "fileio.h"
@@ -34,8 +33,7 @@ gcc -o irccmd *.c -I/usr/include/lua5.1 -llua5.1 -lm -ldl -Wl,-E
 #define _ON_WINDOWS_ 1
 #endif
 
-lua_State *L = NULL;
-FRandom frand;
+static FRandom frand;
 
 
 #define LuaReturn(r, NumArgs) (-(NumArgs) + (r) - 1)
@@ -47,41 +45,6 @@ FRandom frand;
 	#else
 		#define LL_INLINE inline
 	#endif
-#endif
-
-
-#define MAXOF_unsigned(T) (T)(~(T)0)
-#define MAXOF_signed(T) (T)(~(T)0 & ~((T)1 << (sizeof(T) * 8 - 1)))
-/* #define MAXOF(T) ( ((T)((T)0 - (T)1) > (T)0) ? MAXOF_unsigned(T) : MAXOF_signed(T) ) */
-#define MAXOF(T) ( ((T)(-1) < 0) ? MAXOF_signed(T) : MAXOF_unsigned(T) )
-
-
-#if _DEBUG
-#include <assert.h>
-#include <limits.h>
-#include <stdio.h>
-static void MAXOF_Test()
-{
-	/*
-	fprintf(stderr, "MAXOF(char) = %d\n", MAXOF(char));
-	fprintf(stderr, "MAXOF(signed char) = %d\n", MAXOF(signed char));
-	fprintf(stderr, "MAXOF(unsigned char) = %d\n", MAXOF(unsigned char));
-	fprintf(stderr, "MAXOF(short) = %d\n", MAXOF(short));
-	fprintf(stderr, "MAXOF(unsigned short) = %d\n", MAXOF(unsigned short));
-	fprintf(stderr, "MAXOF(int) = %d\n", MAXOF(int));
-	fprintf(stderr, "MAXOF(unsigned int) = %d\n", MAXOF(unsigned int));
-	fprintf(stderr, "MAXOF(long) = %d\n", MAXOF(long));
-	fprintf(stderr, "MAXOF(unsigned long) = %d\n", MAXOF(unsigned long));
-	*/
-	assert(MAXOF(signed char) == SCHAR_MAX);
-	assert(MAXOF(unsigned char) == UCHAR_MAX);
-	assert(MAXOF(short) == SHRT_MAX);
-	assert(MAXOF(unsigned short) == USHRT_MAX);
-	assert(MAXOF(int) == INT_MAX);
-	assert(MAXOF(unsigned int) == UINT_MAX);
-	assert(MAXOF(long) == LONG_MAX);
-	assert(MAXOF(unsigned long) == ULONG_MAX);
-}
 #endif
 
 
@@ -341,7 +304,7 @@ static void addrhintsdefaults(struct addrinfo *paddrhints)
 }
 
 
-static int tryluaaddresstype(int luaIndex, struct addrinfo *paddrhints)
+static int tryluaaddresstype(lua_State *L, int luaIndex, struct addrinfo *paddrhints)
 {
 	if(lua_isnumber(L, luaIndex))
 	{
@@ -382,7 +345,7 @@ static int tryluaaddresstype(int luaIndex, struct addrinfo *paddrhints)
 }
 
 
-static int tryluaaddressfamily(int luaIndex, struct addrinfo *paddrhints)
+static int tryluaaddressfamily(lua_State *L, int luaIndex, struct addrinfo *paddrhints)
 {
 	if(lua_isnumber(L, luaIndex))
 	{
@@ -474,7 +437,7 @@ static int luafunc_socket_connect(lua_State *L)
 	}
 	else
 	{
-		int xaddrtype = tryluaaddresstype(3, &addrhints);
+		int xaddrtype = tryluaaddresstype(L, 3, &addrhints);
 		if(xaddrtype)
 			return xaddrtype;
 
@@ -484,7 +447,7 @@ static int luafunc_socket_connect(lua_State *L)
 		}
 		else
 		{
-			int xaddrfamily = tryluaaddressfamily(4, &addrhints);
+			int xaddrfamily = tryluaaddressfamily(L, 4, &addrhints);
 			if(xaddrfamily)
 				return xaddrfamily;
 		}
@@ -623,14 +586,14 @@ static int luafunc_socket_bind(lua_State *L)
 
 	do
 	{
-		int xaddrtype = tryluaaddresstype(4, &addrhints);
+		int xaddrtype = tryluaaddresstype(L, 4, &addrhints);
 		if(xaddrtype)
 			return xaddrtype;
 	}while(0);
 
 	do
 	{
-		int xaddrfamily = tryluaaddressfamily(5, &addrhints);
+		int xaddrfamily = tryluaaddressfamily(L, 5, &addrhints);
 		if(xaddrfamily)
 			return xaddrfamily;
 	}while(0);
@@ -719,14 +682,14 @@ static int luafunc_socket_listen(lua_State *L)
 
 	do
 	{
-		int xaddrtype = tryluaaddresstype(iarg++, &addrhints);
+		int xaddrtype = tryluaaddresstype(L, iarg++, &addrhints);
 		if(xaddrtype)
 			return xaddrtype;
 	}while(0);
 
 	do
 	{
-		int xaddrfamily = tryluaaddressfamily(iarg++, &addrhints);
+		int xaddrfamily = tryluaaddressfamily(L, iarg++, &addrhints);
 		if(xaddrfamily)
 			return xaddrfamily;
 	}while(0);
@@ -1920,9 +1883,44 @@ static int luafunc_UTF32toUTF8char(lua_State *L)
 }
 #endif
 
-
-static void addluafunctions()
+static int luafunc_socket_startup(lua_State *L)
 {
+	if (_socketsStartup()) {
+		return luaL_error(L, "unable to initialize sockets");
+	}
+	lua_pushboolean(L, 1);
+	return 1;
+}
+
+static int luafunc_socket_cleanup(lua_State *L)
+{
+	_socketsCleanup();
+	return 0;
+}
+
+
+/*
+	Usage: irccmd <address>[:<port>] [<nick> [<alt_nick>]]
+	nick and alt_nick can contain replacements:
+		%d for a random digit.
+		%a for a random alpha char, %A for uppercase.
+		%n for a random number between 10 and 999 (between 2 and 3 digits)
+		%s for a random string of between 2 and 3 alpha chars, %S for uppercase.
+	If no alt_nick supplied and nick contains no replacements, <nick>_%n is used.
+	Other switches supported:
+		-raw            write all received commands to stderr.
+		-raw=<file>     where <file> is either stdout, stderr or a filename.
+*/
+int luaopen_irccmd(lua_State *L)
+{
+#if _DEBUG
+	compare_Test();
+	fileio_AllTests();
+	fprintf(stderr, "Tests completed\n");
+#endif
+
+	frandom_init(&frand, rrandom());
+
 	luaL_Reg array[] = {
 		{ "random", &luafunc_random },
 		{ "frandom", &luafunc_frandom },
@@ -1951,94 +1949,12 @@ static void addluafunctions()
 #ifdef HAS_UTF32toUTF8char
 		{ "UTF32toUTF8char", &luafunc_UTF32toUTF8char },
 #endif
+		{ "socket_startup", &luafunc_socket_startup },
+		{ "socket_cleanup", &luafunc_socket_cleanup },
 		{ NULL, NULL }
 	};
 	luaL_register(L, "internal", array);
-}
 
-
-static void lua_pushstringsarray(lua_State *L, int argc, char* argv[])
-{
-	lua_Integer i;
-	lua_Integer n;
-	if(argc >= 0)
-		n = argc;
-	else
-		n = MAXOF(lua_Integer);
-	lua_createtable(L, argc >= 0 ? argc : 0, 0);
-	for(i = 0; i < n; i++)
-	{
-		if(!argv[i] && argc < 0)
-			break;
-		lua_pushinteger(L, 1 + i); /* Index */
-		lua_pushstring(L, argv[i]); /* Value */
-		lua_settable(L, -1 -2);
-	}
-}
-
-
-/*
-	Usage: irccmd <address>[:<port>] [<nick> [<alt_nick>]]
-	nick and alt_nick can contain replacements:
-		%d for a random digit.
-		%a for a random alpha char, %A for uppercase.
-		%n for a random number between 10 and 999 (between 2 and 3 digits)
-		%s for a random string of between 2 and 3 alpha chars, %S for uppercase.
-	If no alt_nick supplied and nick contains no replacements, <nick>_%n is used.
-	Other switches supported:
-		-raw            write all received commands to stderr.
-		-raw=<file>     where <file> is either stdout, stderr or a filename.
-*/
-int main(int argc, char* argv[])
-{
-#if _DEBUG
-	MAXOF_Test();
-	compare_Test();
-	fileio_AllTests();
-	fprintf(stderr, "Tests completed\n");
-#endif
-
-	srand((unsigned)(time(NULL) + getPID()));
-	frandom_init(&frand, rrandom());
-
-	L = luaL_newstate();
-	if(!L)
-		_programError("luaL_newstate() returned NULL", 1);
-	luaL_openlibs(L);
-	addluafunctions();
-
-	fprintf(stderr, "Loading script...\n");
-	fflush(stderr);
-	//if(luaL_dofile(L, "irccmd.lua"))
-	if(luaL_dostring(L, "require('irccmd')"))
-	{
-		const char *err = lua_tostring(L, -1);
-		fprintf(stderr, "Error loading script: %s\n", err);
-	}
-	fprintf(stderr, "Script loaded\n");
-	fflush(stderr);
-
-	if(_socketsStartup())
-	{
-		fprintf(stderr, "Unable to initialize sockets\n");
-		return 11;
-	}
-
-	lua_getglobal(L, "irccmd_startup");
-	if(!lua_isnil(L, -1))
-	{
-		lua_pushinteger(L, argc);
-		lua_pushstringsarray(L, argc, argv);
-		if(lua_pcall(L, 2, 0, 0))
-		{
-			_programError("Error during irccmd_startup", 0);
-			_programError(lua_tostring(L, -1), 0);
-			lua_pop(L, 1);
-		}
-	}
-
-	_socketsCleanup();
-
-	return 0;
+	return 1;
 }
 

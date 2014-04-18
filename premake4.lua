@@ -2,9 +2,14 @@ solution "irccmd"
 	configurations { "Debug", "Release" }
 
 	project "irccmd"
-		kind "ConsoleApp"
+		kind "SharedLib"
 		language "C"
 		files { "**.h", "**.c" }
+
+		targetprefix ""
+
+		configuration "macosx"
+			targetextension ".so"
 
 		-- Find the proper Lua pkg-config in this order.
 		local lua_names = { "lua5.1", "luajit", "lua" }
