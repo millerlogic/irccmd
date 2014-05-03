@@ -6,7 +6,6 @@ require("internal")
 require("timersl")
 require("sockets")
 require("ircprotocol")
-pcall(require, "ircnicklist") -- Not a hard dependency.
 
 
 --[[
@@ -428,6 +427,10 @@ function irccmd_startup(argc, argv)
 	end
 
 end
+
+
+-- Do this last so that everything else is setup.
+pcall(require, "ircnicklist") -- Not a hard dependency.
 
 
 if internal._icDebug then
