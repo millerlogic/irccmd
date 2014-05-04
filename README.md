@@ -6,15 +6,14 @@ Short for IRC Command, a scriptable command-line IRC client.
 Depends on
 <a href="http://www.lua.org/versions.html#5.1">Lua 5.1</a>.
 
+* Install premake4.
 * Install Lua 5.1 using your platform's favorite package manager, or using the download from the Lua site. The packages may be named similarly to lua5.1 and liblua5.1-0-dev.
 
 Fetch irccmd. To build:
 ```
-cd src
-make LUA_INCLUDE=/usr/include/lua5.1
-cd ..
+premake4 gmake
+make
 ```
-If the above cannot find your lua include headers, change LUA_INCLUDE=... based on where the dev headers are on your system.
 
 Run it:
 ```
