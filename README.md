@@ -14,7 +14,7 @@ cd src
 make LUA_INCLUDE=/usr/include/lua5.1
 cd ..
 ```
-If the above cannot find your lua include headers, try make without the INCLUDES=..., or change it based on where the dev headers are on your system.
+If the above cannot find your lua include headers, change LUA_INCLUDE=... based on where the dev headers are on your system.
 
 Run it:
 ```
