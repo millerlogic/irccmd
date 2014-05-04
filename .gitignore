@@ -1,5 +1,11 @@
 irccmd
 
+# premake4
+build
+obj
+Makefile
+*.make
+
 *.o
 *.obj
 *.lib
