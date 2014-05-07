@@ -1,0 +1,18 @@
+# See http://editorconfig.org
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.c]
+indent_style = tab
+indent_size = 4
+
+[src/bit.c]
+indent_style = space
+indent_size = 2
+
+[*.lua]
+indent_style = tab
+indent_size = 4
