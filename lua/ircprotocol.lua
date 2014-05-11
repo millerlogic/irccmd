@@ -76,15 +76,27 @@ function IrcClient:init(socket)
 	onmt.__newindex = function(t, key, value)
 		-- print("event", key, "from", debug.getinfo(1).source)
 		-- Alter the key so that __newindex is always called.
+		local first = false
+		if key:sub(1, 1) == '^' then
+			first = true
+			key = key:sub(2)
+		end
 		key = "/" .. key
 		local e = rawget(t, key)
 		if not e then
 			e = event()
 			rawset(t, key, e)
 		end
-		e:add(value)
+		if first then
+			e:insert(1, value)
+		else
+			e:add(value)
+		end
 	end
 	onmt.__index = function(t, key)
+		-- if key:sub(1, 1) == '^' then
+		-- 	key = key:sub(2)
+		-- end
 		key = "/" .. key
 		return rawget(t, key)
 	end

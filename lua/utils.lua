@@ -99,6 +99,22 @@ function event:add(func)
 	table.insert(self, func)
 end
 
+-- Same as add but allows specifying where it's added.
+-- If it already exists, it is moved to the index.
+function event:insert(index, func)
+	assert(index and func)
+	for i = 1, #self do
+		if func == self[i] then
+			if i ~= index then
+				table.remove(self, i)
+				break
+			end
+			return
+		end
+	end
+	table.insert(self, index, func)
+end
+
 function event:remove(func)
 	for i = 1, #self do
 		if func == self[i] then
