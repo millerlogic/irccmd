@@ -24,8 +24,10 @@ debug.sethook(hook, "cr") -- trace
 
 irccmd = true
 addrs = addrs or nil
+port_set = port_set or nil
 nick_set = nick_set or nil -- can contain %x special sequences to be translated.
 alt_nick_set = alt_nick_set or nil -- use IrcClient:nick() to get the real nick.
+password_set = password_set or nil
 doraw = doraw or nil
 interactive = interactive or nil
 loadscripts = loadscripts or nil
@@ -154,10 +156,14 @@ function do_cmdline(argc, argv)
 			if arg == "-address" or arg == "-addr"
 				or arg == "-addresses" or arg == "-addrs" then
 				addrs = argvalue
+			elseif arg == "-port" then
+				port_set = tonumber(argvalue)
 			elseif arg == "-nick" then
 				nick_set = argvalue
 			elseif arg == "-altnick" or arg == "-alt_nick" then
 				alt_nick_set = argvalue
+			elseif arg == "-password" or arg == "-pass" then
+				password_set = argvalue
 			elseif arg == "-raw" then
 				if argvalue == "" or argvalue:lower() == "stderr" then
 					doraw = io.stderr
@@ -225,6 +231,9 @@ end
 
 function IrcCmdClient:onConnected()
 	local nick, alt_nick = replacements2(nick_set), replacements2(alt_nick_set)
+	if password_set then
+		self:sendLine("PASS " .. password_set)
+	end
 	-- self:sendLine("NICK " .. nick)
 	self:nick(nick)
 	self:sendLine("USER " .. nick .. " b c :" .. nick)
@@ -289,6 +298,9 @@ function irccmd_startup(argc, argv)
 	if not alt_nick_set then
 		alt_nick_set = nick_set .. "_%d"
 	end
+	if not port_set then
+		port_set = 6667
+	end
 
 	-- print(" nick = " .. nick .. " - alt_nick = " .. alt_nick .. " ")
 	-- print(" connecting to " .. addrs .. " ")
@@ -299,7 +311,6 @@ function irccmd_startup(argc, argv)
 	for xa in addrs:gmatch("[^,; ]+") do
 		addr = xa
 	end
-	local port = 6667
 																--addr = "localhost"
 																--port = 80
 	local client = IrcCmdClient()
@@ -314,10 +325,10 @@ function irccmd_startup(argc, argv)
 		local addr6 = addr:match("^[iI][pP][vV]6%+(.*)$")
 		if addr6 then
 			io.stderr:write("Connecting to '", addr6, "' (IPv6)...\n")
-			assert(combinefail(client:connect(addr6, port, "STREAM", "INET6")))
+			assert(combinefail(client:connect(addr6, port_set, "STREAM", "INET6")))
 		else
 			io.stderr:write("Connecting to '", addr, "'...\n")
-			assert(combinefail(client:connect(addr, port, "STREAM", "INET")))
+			assert(combinefail(client:connect(addr, port_set, "STREAM", "INET")))
 		end
 	end
 	-- internal.console_print("Connected!\n");
