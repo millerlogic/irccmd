@@ -3,6 +3,9 @@
 
 -- Simply require this file and IrcClients get a nicklist.
 -- Note: this must be done before any channels are joined.
+-- Utility functions are provided, as well as:
+-- client:nicklist(chan) - returns table: key=nick, value=table:
+-- 	joined - optional, set to the time when they joined, or nil if they were here already.
 
 
 -- if asString is true, a string is returned, otherwise a table.
@@ -124,7 +127,7 @@ function nl_on_join(client, prefix, cmd, params)
 		key = chan
 	end
 	if key then
-		client._nicklists[key][nick] = {}
+		client._nicklists[key][nick] = { joined = os.time() }
 	end
 end
 
@@ -174,7 +177,9 @@ function nl_on_353(client, prefix, cmd, params) -- NAMES info
 	if key then
 		for xnick in params[4]:gmatch("[^ ]+") do
 			local prefixes, nick = client:getNickInfo(xnick)
-			client._nicklists[key][nick] = {}
+			if not client._nicklists[key][nick] then
+				client._nicklists[key][nick] = { }
+			end
 		end
 	end
 end
