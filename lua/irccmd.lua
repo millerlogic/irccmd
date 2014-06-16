@@ -23,7 +23,7 @@ debug.sethook(hook, "cr") -- trace
 -- -input:RUN=$RUN {1+}
 
 irccmd = true
-addrs = addrs or nil
+addresses = addresses or addrs or nil
 port_set = port_set or nil
 nick_set = nick_set or nil -- can contain %x special sequences to be translated.
 alt_nick_set = alt_nick_set or nil -- use IrcClient:nick() to get the real nick.
@@ -155,7 +155,7 @@ function do_cmdline(argc, argv)
 			ordarg = 60000; -- Disable ord args after a -switch.
 			if arg == "-address" or arg == "-addr"
 				or arg == "-addresses" or arg == "-addrs" then
-				addrs = argvalue
+				addresses = argvalue
 			elseif arg == "-port" then
 				port_set = tonumber(argvalue)
 			elseif arg == "-nick" then
@@ -203,7 +203,7 @@ function do_cmdline(argc, argv)
 				error("Unknown switch: " .. arg)
 			end
 		else
-			if ordarg == 2 then addrs = arg
+			if ordarg == 2 then addresses = arg
 			elseif ordarg == 3 then nick_set = arg
 			elseif ordarg == 4 then alt_nick_set = arg
 			else error("Unexpected: " .. arg) end
@@ -230,9 +230,9 @@ function IrcCmdClient:connect(...)
 end
 
 function IrcCmdClient:onConnected()
-	local nick, alt_nick = replacements2(nick_set), replacements2(alt_nick_set)
-	if password_set then
-		self:sendLine("PASS " .. password_set)
+	local nick, alt_nick = replacements2(self.nick_set), replacements2(self.alt_nick_set)
+	if self.password_set then
+		self:sendLine("PASS " .. self.password_set)
 	end
 	-- self:sendLine("NICK " .. nick)
 	self:nick(nick)
@@ -282,38 +282,39 @@ function combinefail(...)
 end
 
 
--- argv[1] is app name
-function irccmd_startup(argc, argv)
-	do_cmdline(argc, argv)
-	if not addrs then
+function addIrcClient(settings)
+	if type(settings) == "string" then
+		settings = { addresses = settings }
+	end
+	if not settings.addresses then
 		-- addrs = "irc.freenode.net"
 		error("Address expected")
 	end
-	if not nick_set then
-		nick_set = "Guest%d%d%d%d"
-		if not alt_nick_set then
-			alt_nick_set = nick_set
+	if not settings.nick then
+		settings.nick = nick_set or "Guest%d%d%d%d"
+		if not settings.alt_nick then
+			settings.alt_nick = alt_nick_set or settings.nick
 		end
 	end
-	if not alt_nick_set then
-		alt_nick_set = nick_set .. "_%d"
+	if not settings.alt_nick then
+		settings.alt_nick = settings.nick .. "_%d"
 	end
-	if not port_set then
-		port_set = 6667
+	if not settings.port then
+		settings.port = port_set or 6667
 	end
-
+	
 	-- print(" nick = " .. nick .. " - alt_nick = " .. alt_nick .. " ")
 	-- print(" connecting to " .. addrs .. " ")
 
-	local xt, xtmsg = xpcall(function() --------------------
-
-	local addr;
-	for xa in addrs:gmatch("[^,; ]+") do
+	local addr
+	for xa in settings.addresses:gmatch("[^,; ]+") do
 		addr = xa
 	end
-																--addr = "localhost"
-																--port = 80
+	
 	local client = IrcCmdClient()
+	for k, v in pairs(settings) do
+		client[k .. "_set"] = v
+	end
 	if testmode then
 		io.stderr:write("Test mode, not connecting to IRC\n")
 		client:onReceiveLine(":server 001 Test :Welcome")
@@ -325,10 +326,10 @@ function irccmd_startup(argc, argv)
 		local addr6 = addr:match("^[iI][pP][vV]6%+(.*)$")
 		if addr6 then
 			io.stderr:write("Connecting to '", addr6, "' (IPv6)...\n")
-			assert(combinefail(client:connect(addr6, port_set, "STREAM", "INET6")))
+			assert(combinefail(client:connect(addr6, settings.port, "STREAM", "INET6")))
 		else
 			io.stderr:write("Connecting to '", addr, "'...\n")
-			assert(combinefail(client:connect(addr, port_set, "STREAM", "INET")))
+			assert(combinefail(client:connect(addr, settings.port, "STREAM", "INET")))
 		end
 	end
 	-- internal.console_print("Connected!\n");
@@ -354,6 +355,28 @@ function irccmd_startup(argc, argv)
 	end
 
 	enableSendLineTimer(client, 1.2, 80, 4)
+	
+	if not testmode then
+		manager:add(client)
+	end
+	
+	return client
+end
+
+
+-- argv[1] is app name
+function irccmd_startup(argc, argv)
+	do_cmdline(argc, argv)
+	
+	local xt, xtmsg = xpcall(function() --------------------
+	
+	addClient{
+		nick = nick_set,
+		alt_nick = alt_nick_set,
+		addresses = addresses_set,
+		port = port_set,
+		password = password_set,
+	}
 
 	if loadscripts then
 		for i = 1, #loadscripts do
@@ -390,10 +413,6 @@ function irccmd_startup(argc, argv)
 		end
 	end
 
-	if not testmode then
-		manager:add(client)
-	end
-
 	while connected do -- while connected
 		local xt2, xt2err = xpcall(function() -- xpcall
 			while connected do
@@ -407,7 +426,7 @@ function irccmd_startup(argc, argv)
 		if xt2 then
 			break
 		else
-			numerrors = numerrors + 10
+			numerrors = numerrors + 5
 			if numerrors >= 100 then
 				connected = false
 				error(xt2err)
