@@ -796,7 +796,7 @@ int luafunc_socket_accept(lua_State *L)
 {
 	socket_t sock;
 	socket_t newsock;
-	int addrlen = 0;
+	socklen_t addrlen = 0;
 	union
 	{
 		struct sockaddr addr;
