@@ -370,7 +370,7 @@ function irccmd_startup(argc, argv)
 	
 	local xt, xtmsg = xpcall(function() --------------------
 	
-	addClient{
+	addIrcClient{
 		nick = nick_set,
 		alt_nick = alt_nick_set,
 		addresses = addresses_set,
