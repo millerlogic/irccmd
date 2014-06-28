@@ -23,7 +23,7 @@ debug.sethook(hook, "cr") -- trace
 -- -input:RUN=$RUN {1+}
 
 irccmd = true
-addresses = addresses or addrs or nil
+addresses_set = addresses_set or nil
 port_set = port_set or nil
 nick_set = nick_set or nil -- can contain %x special sequences to be translated.
 alt_nick_set = alt_nick_set or nil -- use IrcClient:nick() to get the real nick.
@@ -155,7 +155,7 @@ function do_cmdline(argc, argv)
 			ordarg = 60000; -- Disable ord args after a -switch.
 			if arg == "-address" or arg == "-addr"
 				or arg == "-addresses" or arg == "-addrs" then
-				addresses = argvalue
+				addresses_set = argvalue
 			elseif arg == "-port" then
 				port_set = tonumber(argvalue)
 			elseif arg == "-nick" then
@@ -203,7 +203,7 @@ function do_cmdline(argc, argv)
 				error("Unknown switch: " .. arg)
 			end
 		else
-			if ordarg == 2 then addresses = arg
+			if ordarg == 2 then addresses_set = arg
 			elseif ordarg == 3 then nick_set = arg
 			elseif ordarg == 4 then alt_nick_set = arg
 			else error("Unexpected: " .. arg) end
