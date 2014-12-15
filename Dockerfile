@@ -39,4 +39,5 @@ RUN cd /tmp/LuaBitOp-1.0.2 && make INCLUDES=-I/usr/include/lua5.1 && make instal
 # Build irccmd.
 RUN cd /irccmd && cc -o irccmd src/*.c $(pkg-config lua5.1 --cflags --libs)
 
+USER nobody
 CMD cd /irccmd && LUA_PATH=/irccmd/lua/?.lua ./irccmd $irccmd_args
