@@ -380,15 +380,7 @@ function irccmd_startup(argc, argv)
 
 	if loadscripts then
 		for i = 1, #loadscripts do
-			local lf, xerr = loadfile(loadscripts[i])
-			if not lf then
-				io.stderr:write("Unable to load script ", loadscripts[i], ": ", xerr or "", "\n")
-			else
-				local xok, xerr = xpcall(lf, debug.traceback)
-				if not xok then
-					io.stderr:write("Error running script ", loadscripts[i], ": ", xerr or "", "\n")
-				end
-			end
+			require(loadscripts[i]:match("^(.*)%.lua$") or loadscripts[i])
 		end
 	end
 
