@@ -11,6 +11,9 @@ RUN apt-get install wget -y
 # Compiler and tools.
 RUN apt-get install gcc make -y
 
+# Patch.
+RUN apt-get install patch -y
+
 # Lua compile deps.
 RUN apt-get install libreadline6-dev -y
 RUN apt-get install ncurses-dev -y # libncurses5-dev
@@ -21,6 +24,9 @@ RUN cd /tmp && tar xzf lua-5.1.5.tar.gz
 
 # Add the host dir.
 ADD ./ /irccmd
+
+# Patch with coco coroutines.
+RUN cd /tmp/lua-5.1.5 && patch -f -p1 </irccmd/src/patches/lua-5.1.5-coco-1.1.7.patch
 
 # Update lua source.
 RUN cp -f /irccmd/src/lua-5.1/* /tmp/lua-5.1.5/src
