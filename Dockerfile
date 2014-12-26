@@ -1,5 +1,5 @@
-# When running, irccmd switches are to be passed in the irccmd_args env var:
-#   docker run -it --rm=true -e irccmd_args="irc.server.gom -nick=User22 -noreconnect" millerlogic/irccmd
+# When running, irccmd switches are to be passed in the IRCCMD_ARGS env var:
+#   docker run -it --rm=true -e IRCCMD_ARGS="irc.server.gom -nick=User22 -noreconnect" millerlogic/irccmd
 
 FROM debian:7
 
@@ -46,4 +46,4 @@ RUN cd /tmp/LuaBitOp-1.0.2 && make INCLUDES=-I/usr/include/lua5.1 && make instal
 RUN cd /irccmd && cc -o irccmd src/*.c $(pkg-config lua5.1 --cflags --libs)
 
 USER nobody
-CMD cd /irccmd && LUA_PATH=/irccmd/lua/?.lua ./irccmd $irccmd_args
+CMD cd /irccmd && LUA_PATH=/irccmd/lua/?.lua ./irccmd $IRCCMD_ARGS
