@@ -45,9 +45,13 @@ RUN cd /tmp/LuaBitOp-1.0.2 && make INCLUDES=-I/usr/include/lua5.1 && make instal
 # Build irccmd.
 RUN cd /irccmd && cc -o irccmd src/*.c $(pkg-config lua5.1 --cflags --libs)
 
+RUN groupadd -g 28101 container || echo
+RUN useradd -u 28101 -N -g 28101 container || echo
+
 RUN mkdir /irccmd-state
+RUN chown container:container /irccmd-state
 
 VOLUME ["/var/log", "/irccmd-state"]
 
-USER nobody
+USER container
 CMD cd /irccmd && LUA_PATH=/irccmd/lua/?.lua ./irccmd $IRCCMD_ARGS
