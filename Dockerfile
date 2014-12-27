@@ -51,7 +51,7 @@ RUN useradd -u 28101 -N -g 28101 container || echo
 RUN mkdir /irccmd-state
 RUN chown container:container /irccmd-state
 
-VOLUME ["/var/log", "/irccmd-state"]
+VOLUME ["/irccmd-state"]
 
 USER container
 CMD cd /irccmd && LUA_PATH=/irccmd/lua/?.lua ./irccmd $IRCCMD_ARGS
