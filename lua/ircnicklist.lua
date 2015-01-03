@@ -1,4 +1,4 @@
--- Copyright 2012-2014 Christopher E. Miller
+-- Copyright 2012-2015 Christopher E. Miller, Anders Bergh
 -- License: GPLv3, see LICENSE file.
 
 -- Simply require this file and IrcClients get a nicklist.
@@ -7,6 +7,18 @@
 -- client:nicklist(chan) - returns table: key=nick, value=table:
 -- 	joined - optional, set to the time when they joined, or nil if they were here already.
 
+local function case_insensitive_mt_for_client(client)
+	return {
+		__index = function(t, k)
+			k = type(k) == "string" and client.tolower(k) or k
+			return rawget(t, k)
+		end,
+		__newindex = function(t, k, v)
+			k = type(k) == "string" and client.tolower(k) or k
+			rawset(t, k, v)
+		end
+	}
+end
 
 -- if asString is true, a string is returned, otherwise a table.
 -- stringDelimiter defaults to space.
@@ -36,7 +48,6 @@ function getSortedNickList(client, channel, asString, stringDelimiter)
 	end
 end
 
-
 function isOnChannel(client, nick, channel)
 	local nl = client:nicklist(channel)
 	if nl then
@@ -49,139 +60,109 @@ function isOnChannel(client, nick, channel)
 	return false
 end
 
-
-local function nl_getkey(client, channel)
-	if client._nicklists[channel] then
-		return channel
-	end
-	for k, v in pairs(client._nicklists) do
-		if 0 == client.strcmp(channel, k) then
-			return k
-		end
-	end
-end
+-- preserve case of channel names
+local original_channel_names = {}
 
 function nl_make(client, channel)
 	assert(not client._nicklists[channel])
-	local nl = {}
-	local nlmt = {}
-	nlmt.__index = function(t, key)
-		local x = rawget(t, key)
-		if x then return x end
-		if type(key) == "string" then
-			for k, v in pairs(t) do
-				if 0 == client.strcmp(k, key) then
-					return v
-				end
-			end
-		end
-	end
-	setmetatable(nl, nlmt)
-	return nl
+	original_channel_names[client.tolower(channel)] = channel
+	return setmetatable({}, case_insensitive_mt_for_client(client))
 end
 
 function nl_on_nick(client, prefix, cmd, params)
 	local nick = nickFromSource(prefix)
 	local newnick = params[1]
-	for k, v in pairs(client._nicklists) do
-		local key = k
-		if key then
-			local value = client._nicklists[key][nick]
-			if value then
-				client._nicklists[key][nick] = nil
-				client._nicklists[key][newnick] = value
-			end
-		end
+	for channel, nl in pairs(client._nicklists) do
+		local value = nl[nick]
+		value.nick = newnick
+		nl[newnick], nl[nick] = nl[nick], nil
 	end
+
 	-- Fire artificial NICK_CHAN events per channel this guy is on,
-	for k, v in pairs(client._nicklists) do
-		if k and v then
-			if v[newnick] then
-				local x_chan_params = {}
-				x_chan_params[1] = k
-				x_chan_params[2] = newnick
-				client.on["NICK_CHAN"](client, prefix, "NICK_CHAN", x_chan_params)
-			end
+	for channel, nl in pairs(client._nicklists) do
+		if nl[newnick] then
+			client.on["NICK_CHAN"](client, prefix, "NICK_CHAN", {channel, newnick})
 		end
 	end
 end
 
 function nl_on_part(client, prefix, cmd, params)
 	local nick = nickFromSource(prefix)
-	local key = nl_getkey(client, client:channelNameFromTarget(params[1]))
-	if key then
+	local channel = client:channelNameFromTarget(params[1])
+
+	local nl = client._nicklists[channel]
+	if nl then
 		if nick == client:nick() then
-			client._nicklists[key] = nil
+			client._nicklists[channel] = nil
+			original_channel_names[client.tolower(channel)] = nil
 		else
-			client._nicklists[key][nick] = nil
+			client._nicklists[channel][nick] = nil
 		end
 	end
 end
 
 function nl_on_join(client, prefix, cmd, params)
 	local nick = nickFromSource(prefix)
-	local chan = client:channelNameFromTarget(params[1])
-	local key = nl_getkey(client, chan)
-	if not key then
-		client._nicklists[chan] = nl_make(client, chan)
-		key = chan
+	local channel = client:channelNameFromTarget(params[1])
+
+	local nl = client._nicklists[channel]
+	if not nl then
+		client._nicklists[channel] = nl_make(client, channel)
 	end
-	if key then
-		client._nicklists[key][nick] = { joined = os.time() }
-	end
+	client._nicklists[channel][nick] = { nick = nick, joined = os.time() }
 end
 
 function nl_on_quit(client, prefix, cmd, params)
 	local nick = nickFromSource(prefix)
 	if nick == client:nick() then
 		-- It's me quitting, clear everything.
-		client._nicklists = {}
+		client._nicklists = nil
 	else
 		local nick = nickFromSource(prefix)
 		-- Fire artificial QUIT_CHAN events per channel this guy is on,
-		for k, v in pairs(client._nicklists) do
-			if k and v then
-				if v[nick] then
-					local x_chan_params = {}
-					x_chan_params[1] = k
-					x_chan_params[2] = params[1]
-					client.on["QUIT_CHAN"](client, prefix, "QUIT_CHAN", x_chan_params)
-				end
-			end
-		end
-		for k, v in pairs(client._nicklists) do
-			local key = k
-			if key then
-				client._nicklists[key][nick] = nil
+		for channel, nl in pairs(client._nicklists) do
+			channel = original_channel_names[channel]
+			if nl[nick] then
+				client.on["QUIT_CHAN"](client, prefix, "QUIT_CHAN", {channel, params[1]})
+				nl[nick] = nil
 			end
 		end
 	end
 end
 
 function nl_on_kick(client, prefix, cmd, params)
-	local key = nl_getkey(client, client:channelNameFromTarget(params[1]))
-	if key then
+	local channel = client:channelNameFromTarget(params[1])
+	local nl = client._nicklists[channel]
+	if nl then
 		local kicked = params[2]
-		client._nicklists[key][kicked] = nil
+		nl[kicked] = nil
 	end
 end
 
 function nl_on_353(client, prefix, cmd, params) -- NAMES info
-	local chan = client:channelNameFromTarget(params[3])
-	local key = nl_getkey(client, chan)
-	if not key then
+	local channel = client:channelNameFromTarget(params[3])
+	if not client._nicklists[channel] then
 		-- print("Registering", chan);
-		client._nicklists[chan] = nl_make(client, chan)
-		key = chan
+		client._nicklists[chan] = nl_make(client, channel)
 	end
-	if key then
-		for xnick in params[4]:gmatch("[^ ]+") do
-			local prefixes, nick = client:getNickInfo(xnick)
-			if not client._nicklists[key][nick] then
-				client._nicklists[key][nick] = { }
-			end
+	local nl = client._nicklists[channel]
+	for xnick in params[4]:gmatch("[^ ]+") do
+		local prefixes, nick = client:getNickInfo(xnick)
+		if not nl[nick] then
+			nl[nick] = { nick = nick }
 		end
 	end
+end
+
+local function nl_compatkeys(t)
+	-- for backwards compatibility, preserve case of nick keys
+	local tmp = {}
+
+	for k, v in pairs(t) do
+		tmp[v.nick] = v
+	end
+
+	return tmp
 end
 
 function regNickList(client)
@@ -189,28 +170,12 @@ function regNickList(client)
 		return -- Nicklists already setup for this client
 		-- This can happen when reloading this file.
 	end
-	client._nicklists = {}
-	local _nlsmt = {}
-	_nlsmt.__index = function(t, key)
-		local x = rawget(t, key)
-		if x then return x end
-		if type(key) == "string" then
-			for k, v in pairs(t) do
-				if 0 == client.strcmp(k, key) then
-					return v
-				end
-			end
-		end
-	end
-	setmetatable(client._nicklists, _nlsmt)
-
+	client._nicklists = setmetatable({}, case_insensitive_mt_for_client(client))
 	client.nicklist = function(client, channel)
-		local key = nl_getkey(client, channel)
-		-- print("channel", channel, " = key", key)
-		if key then
-			return client._nicklists[key]
+		local nl = client._nicklists[channel]
+		if nl then
+			return nl_compatkeys(nl)
 		end
-		return nil
 	end
 
 	client.on["NICK"] = "nl_on_nick"
@@ -219,22 +184,21 @@ function regNickList(client)
 	client.on["QUIT"] = "nl_on_quit"
 	client.on["KICK"] = "nl_on_kick"
 	client.on["353"] = "nl_on_353"
-
 end
 
--- Returns a table: key is channel name, value is (table: key=nickname, value=table).
+-- Returns a table: {[channel] = {[nick] = {joined = ts}}}
 function getNicklists(client)
-	return client._nicklists
+	local tmp = {}
+	for channel, nl in pairs(client._nicklists) do
+		tmp[original_channel_names[channel]] = nl_compatkeys(nl)
+	end
+	return tmp
 end
 
 function getNickOnChannel(client, nick, channel)
 	local nl = client:nicklist(channel)
-	if nl then
-		for n, ninfo in pairs(nl) do
-			if 0 == client.strcmp(nick, n) then
-				return ninfo, n
-			end
-		end
+	if nl and nl[nick] then
+		return nl[nick], nl[nick].nick
 	end
 end
 
