@@ -106,6 +106,10 @@ if not internal or internal._icDebug then
 		return 1
 	end
 
+	internal.tolower_ascii = string.lower
+	internal.tolower_rfc1459 = string.lower
+	internal.tolower_strict_rfc1459 = string.lower
+
 	internal.memory_limit = function()
 		return 0, 0
 	end

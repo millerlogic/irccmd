@@ -283,6 +283,7 @@ function IrcClient:onCommand(prefix, cmd, params)
 
 	if cmd == "001" then
 		self.strcmp = internal.compare_rfc1459
+		self.tolower = internal.tolower_rfc1459
 		self.support = {}
 		-- Default ISUPPORT values:
 		self.support["CASEMAPPING"] = "rfc1459"
@@ -324,10 +325,13 @@ function IrcClient:onCommand(prefix, cmd, params)
 				elseif k == "CASEMAPPING" then
 					if v == "ascii" then
 						self.strcmp = internal.compare_ascii
+						self.tolower = internal.tolower_ascii
 					elseif v == "rfc1459" then
 						self.strcmp = internal.compare_rfc1459
+						self.tolower = internal.tolower_rfc1459
 					elseif v == "strict-rfc1459" then
 						self.strcmp = internal.compare_strict_rfc1459
+						self.tolower = internal.tolower_strict_rfc1459
 					else
 						io.stderr:write("WARNING: unknown CASEMAPPING: ", v, "\n")
 						self.strcmp = internal.compare_rfc1459
