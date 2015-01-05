@@ -32,6 +32,7 @@ gcc -o irccmd *.c -I/usr/include/lua5.1 -llua5.1 -lm -ldl -Wl,-E
 
 #if defined(WIN32) || defined(WIN64) || defined(WINNT)
 #define _ON_WINDOWS_ 1
+typedef int socklen_t;
 #endif
 
 lua_State *L = NULL;
