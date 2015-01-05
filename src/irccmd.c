@@ -32,6 +32,7 @@ gcc -o irccmd *.c -I/usr/include/lua5.1 -llua5.1 -lm -ldl -Wl,-E
 
 #if defined(WIN32) || defined(WIN64) || defined(WINNT)
 #define _ON_WINDOWS_ 1
+typedef int socklen_t;
 #endif
 
 lua_State *L = NULL;
@@ -796,7 +797,7 @@ int luafunc_socket_accept(lua_State *L)
 {
 	socket_t sock;
 	socket_t newsock;
-	int addrlen = 0;
+	socklen_t addrlen = 0;
 	union
 	{
 		struct sockaddr addr;
