@@ -1,5 +1,3 @@
-
-
 local function get_topic_table(client, channel)
 	local t = client._topics[channel] or {}
 	client._topics[channel] = t
@@ -34,14 +32,13 @@ function regTopic(client)
 	end
 	client._topics = {}
 
-	-- TODO: properly IRC case insensitive
 	local mt = {}
 	mt.__index = function(t, k)
-		k = type(k) == "string" and k:lower() or k
+		k = type(k) == "string" and client.tolower(k) or k
 		return rawget(t, k)
 	end
 	mt.__newindex = function(t, k, v)
-		k = type(k) == "string" and k:lower() or k
+		k = type(k) == "string" and client.tolower(k) or k
 		rawset(t, k, v)
 	end
 
