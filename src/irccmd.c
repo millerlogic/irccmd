@@ -1771,6 +1771,24 @@ int luafunc_compare_strict_rfc1459(lua_State *L)
 	return 1; /* Number of return values. */
 }
 
+/** string = tolower_xxx(s) */
+#define LUAFUNC_TOLOWER(MAP) int luafunc_tolower_ ## MAP (lua_State *L) \
+{ \
+	char buf[512]; \
+	size_t i, len; \
+	const char *s; \
+	if (lua_isnil(L, 1)) return 0; \
+	s = lua_tolstring(L, 1, &len); \
+	if (len > sizeof(buf)) luaL_error(L, "string exceeds length of buffer"); \
+	for (i = 0; i < len; i++) buf[i] = tolower_ ## MAP (s[i]); \
+	lua_pushlstring(L, buf, len); \
+	return 1; \
+} \
+
+LUAFUNC_TOLOWER(ascii)
+LUAFUNC_TOLOWER(rfc1459)
+LUAFUNC_TOLOWER(strict_rfc1459)
+
 
 lua_Alloc realLuaAllocFunc = NULL;
 ptrdiff_t memLimit = 0;
@@ -1936,6 +1954,9 @@ void addluafunctions()
 		{ "compare_ascii", &luafunc_compare_ascii },
 		{ "compare_rfc1459", &luafunc_compare_rfc1459 },
 		{ "compare_strict_rfc1459", &luafunc_compare_rfc1459 },
+		{ "tolower_ascii", &luafunc_tolower_ascii },
+		{ "tolower_rfc1459", &luafunc_tolower_rfc1459 },
+		{ "tolower_strict_rfc1459", &luafunc_tolower_strict_rfc1459 },
 		{ "socket_connect", &luafunc_socket_connect },
 		{ "socket_bind", &luafunc_socket_bind },
 		{ "socket_listen", &luafunc_socket_listen },
