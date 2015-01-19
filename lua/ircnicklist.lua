@@ -1,5 +1,5 @@
 -- Copyright 2012-2015 Christopher E. Miller, Anders Bergh
--- License: GPLv3, see LICENSE file.
+-- License: GPLv2, see LICENSE file.
 
 -- Simply require this file and IrcClients get a nicklist.
 -- Note: this must be done before any channels are joined.
