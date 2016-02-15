@@ -31,8 +31,7 @@ RUN cd /tmp/lua-5.1.5 && patch -f -p1 </irccmd/src/patches/lua-5.1.5-coco-1.1.7.
 # Update lua source.
 RUN cp -f /irccmd/src/lua-5.1/* /tmp/lua-5.1.5/src
 
-# Get lua dev headers so we can build modules.
-RUN apt-get install liblua5.1-0-dev -y
+#RUN apt-get install liblua5.1-0-dev -y
 
 # Build and install lua.
 RUN cd /tmp/lua-5.1.5/ && make linux && make install
@@ -43,7 +42,7 @@ RUN cd /tmp && tar xzf LuaBitOp-1.0.2.tar.gz
 RUN cd /tmp/LuaBitOp-1.0.2 && make INCLUDES=-I/usr/include/lua5.1 && make install
 
 # Build irccmd.
-RUN cd /irccmd && cc -o irccmd src/*.c $(pkg-config lua5.1 --cflags --libs)
+RUN cd /irccmd && cc -o irccmd src/*.c -I/usr/include/lua5.1 -lm -ldl -L/tmp/lua-5.1.5/src -llua
 
 RUN groupadd -g 28101 container || echo
 RUN useradd -u 28101 -N -g 28101 container || echo
