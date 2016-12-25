@@ -1,0 +1,3 @@
+#!/bin/sh
+
+lua lua/irccmd.lua "$@"
