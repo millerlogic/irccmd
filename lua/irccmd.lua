@@ -1,8 +1,26 @@
 -- Copyright 2012-2014 Christopher E. Miller
 -- License: GPLv2, see LICENSE file.
 
+--[=[
+	Usage: irccmd <address>[:<port>] [<nick> [<alt_nick>]]
+	nick and alt_nick can contain replacements:
+		%d for a random digit.
+		%a for a random alpha char, %A for uppercase.
+		%n for a random number between 10 and 999 (between 2 and 3 digits)
+		%s for a random string of between 2 and 3 alpha chars, %S for uppercase.
+	If no alt_nick supplied and nick contains no replacements, <nick>_%n is used.
+	Other switches supported:
+		-raw            write all received commands to stderr.
+		-raw=<file>     where <file> is either stdout, stderr or a filename.
+]=]
+
+local arg1 = ...
+if arg1 == "-debug" then
+	package.path = "./lua/debug/?.lua;" .. package.path
+end
+
+require("irccmd_internal")
 require("utils")
-require("internal")
 require("timersl")
 require("sockets")
 require("ircprotocol")
@@ -458,7 +476,17 @@ pcall(require, "ircnicklist") -- Not a hard dependency.
 if internal._icDebug then
 	-- print("package.path=", package.path)
 	-- print("package.cpath=", package.cpath)
-	local testargs = { "debugapp", "localhost", "Foo%n%S%s", "-load=gamearmleg.lua", "-raw" }
+	-- local testargs = { "debugapp", "localhost", "Foo%n%S%s", "-load=gamearmleg.lua", "-raw" }
+	local testargs = { "debugapp", "localhost", "Foo%n%S%s", "-raw" }
 	irccmd_startup(#testargs, testargs) -- Run a test when debugging.
 end
 
+internal.socket_startup()
+
+local argc, argv = #arg + 1, {}
+for i=-1, #arg do
+	argv[i+1] = arg[i]
+end
+irccmd_startup(argc, argv)
+
+internal.socket_cleanup()

@@ -5,8 +5,8 @@
 -- They can be used for testing as well as documentation.
 
 
-if not internal or internal._icDebug then
-	internal = {}
+if true then
+	internal = {} -- Deprecated global
 	internal._icDebug = true
 
 	--[[
@@ -217,3 +217,4 @@ if not internal or internal._icDebug then
 
 end
 
+return internal

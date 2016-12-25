@@ -45,7 +45,8 @@ RUN luarocks install luabitop
 RUN luarocks install luaposix
 
 # Build irccmd.
-RUN cd /irccmd && cc -o irccmd src/*.c -I/usr/include/lua5.1 -lm -ldl -L/tmp/lua-5.1.5/src -llua
+RUN cd /irccmd && cc -shared -fPIC -o irccmd_internal.so src/*.c \
+    -I/usr/include/lua5.1 -lm -ldl
 
 RUN groupadd -g 28101 container || echo
 RUN useradd -u 28101 -N -g 28101 container || echo
