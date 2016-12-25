@@ -36,10 +36,13 @@ RUN cp -f /irccmd/src/lua-5.1/* /tmp/lua-5.1.5/src
 # Build and install lua.
 RUN cd /tmp/lua-5.1.5/ && make linux && make install
 
-# Get and build BitOp module.
-RUN wget -O/tmp/LuaBitOp-1.0.2.tar.gz http://bitop.luajit.org/download/LuaBitOp-1.0.2.tar.gz
-RUN cd /tmp && tar xzf LuaBitOp-1.0.2.tar.gz
-RUN cd /tmp/LuaBitOp-1.0.2 && make INCLUDES=-I/usr/include/lua5.1 && make install
+# Get luarocks
+RUN apt-get install git -y
+RUN apt-get install luarocks -y
+
+# Get some stuff from luarocks
+RUN luarocks install luabitop
+RUN luarocks install luaposix
 
 # Build irccmd.
 RUN cd /irccmd && cc -o irccmd src/*.c -I/usr/include/lua5.1 -lm -ldl -L/tmp/lua-5.1.5/src -llua
