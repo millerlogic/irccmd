@@ -1,4 +1,4 @@
-irccmd
+irccmd_internal.so
 
 # premake4
 build

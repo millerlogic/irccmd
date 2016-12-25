@@ -1,3 +1,5 @@
+#!/usr/bin/env lua
+
 -- Copyright 2012-2014 Christopher E. Miller
 -- License: GPLv2, see LICENSE file.
 
