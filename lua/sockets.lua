@@ -1,7 +1,7 @@
 -- Copyright 2012-2014 Christopher E. Miller
 -- License: GPLv2, see LICENSE file.
 
-require("internal")
+require("irccmd_internal")
 require("utils")
 
 
