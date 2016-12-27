@@ -9,9 +9,6 @@ solution "irccmd"
 		targetname "irccmd_internal"
 		targetprefix ""
 
-		configuration "macosx"
-			targetextension ".so"
-
 		-- Find the proper Lua pkg-config in this order.
 		local lua_names = { "lua5.1", "luajit", "lua" }
 
@@ -37,3 +34,6 @@ solution "irccmd"
 
 		configuration "Release"
 			flags { "Optimize" }
+
+		configuration "macosx"
+			targetextension ".so"
