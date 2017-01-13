@@ -94,7 +94,7 @@ function nl_on_part(client, prefix, cmd, params)
 	if nl then
 		if nick == client:nick() then
 			client._nicklists[channel] = nil
-			original_channel_names[client.tolower(channel)] = nil
+			-- original_channel_names[client.tolower(channel)] = nil -- which network?
 		else
 			client._nicklists[channel][nick] = nil
 		end
@@ -121,7 +121,7 @@ function nl_on_quit(client, prefix, cmd, params)
 		local nick = nickFromSource(prefix)
 		-- Fire artificial QUIT_CHAN events per channel this guy is on,
 		for channel, nl in pairs(client._nicklists) do
-			channel = original_channel_names[channel]
+			channel = original_channel_names[channel] or channel
 			if nl[nick] then
 				client.on["QUIT_CHAN"](client, prefix, "QUIT_CHAN", {channel, params[1]})
 				nl[nick] = nil
@@ -142,8 +142,8 @@ end
 function nl_on_353(client, prefix, cmd, params) -- NAMES info
 	local channel = client:channelNameFromTarget(params[3])
 	if not client._nicklists[channel] then
-		-- print("Registering", chan);
-		client._nicklists[chan] = nl_make(client, channel)
+		-- print("Registering", channel);
+		client._nicklists[channel] = nl_make(client, channel)
 	end
 	local nl = client._nicklists[channel]
 	for xnick in params[4]:gmatch("[^ ]+") do
@@ -190,7 +190,7 @@ end
 function getNicklists(client)
 	local tmp = {}
 	for channel, nl in pairs(client._nicklists) do
-		tmp[original_channel_names[channel]] = nl_compatkeys(nl)
+		tmp[original_channel_names[channel] or channel] = nl_compatkeys(nl)
 	end
 	return tmp
 end
