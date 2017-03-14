@@ -302,7 +302,7 @@ function combinefail(...)
 end
 
 
-function addIrcClient(settings)
+function addIrcClient(settings, noFloodProtection)
 	if type(settings) == "string" then
 		settings = { addresses = settings }
 	end
@@ -374,7 +374,9 @@ function addIrcClient(settings)
 		end
 	end
 
-	enableSendLineTimer(client, 1.2, 80, 4)
+	if not noFloodProtection then
+		enableSendLineTimer(client, 1.2, 80, 4)
+	end
 	
 	if not testmode then
 		manager:add(client)
